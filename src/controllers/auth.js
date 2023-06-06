@@ -4,18 +4,25 @@ const crypto = require("crypto");
 const ErrorResponse = require("../utils/errorResponse");
 const asyncHandler = require("../middlewares/async");
 const sendEmail = require("../utils/sendEmail");
+const sendTokenResponse = require("../utils/errorResponse");
 //const { sendEmail } = require('../services/emailService');
 
 // @desc      Register user
 // @route     POST /api/v1/auth/register
 // @access    Public
 // controllers/authController.js
-// const AuthService = require("../services/authServices");
+const AuthService = require("../services/authServices");
 
 class AuthController {
   register = asyncHandler(async (req, res, next) => {
-    const { name, email, password, role, description } = req.body;
-    const user = await AuthService.registerUser(name, email, password, role);
+    const { fullName, email, password, role, description } = req.body;
+    const user = await AuthService.registerUser(
+      fullName,
+      email,
+      password,
+      role,
+      description
+    );
     this.sendTokenResponse(user, 200, res);
   });
 
@@ -230,6 +237,28 @@ class AuthController {
     // Generate token and send response
     this.sendTokenResponse(user, 200, res);
   });
+
+  refreshAccessToken = async (req, res, next) => {
+    const { refreshToken } = req.body;
+
+    try {
+      const tokens = await AuthService.refreshAccessToken(refreshToken);
+      res.status(200).json(tokens);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  refreshRefreshToken = async (req, res, next) => {
+    const { refreshToken } = req.body;
+
+    try {
+      const tokens = await AuthService.refreshRefreshToken(refreshToken);
+      res.status(200).json(tokens);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 module.exports = new AuthController();

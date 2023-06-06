@@ -1,7 +1,8 @@
 const ErrorResponse = require("../utils/errorResponse");
 
 const sendEmail = require("../utils/sendEmail");
-const User = require("../models/users/employerModel");
+const User = require("../models/user");
+const { generateAccessToken, verifyRefreshToken } = require("../utils/token");
 
 // services/authService.js
 
@@ -129,6 +130,28 @@ class AuthService {
 
   static async createUser(userData) {
     return await User.create(userData);
+  }
+
+  static async refreshToken(refreshToken) {
+    try {
+      // Verify the refresh token
+      const decoded = verifyRefreshToken(refreshToken);
+
+      // Check if the user exists
+      const user = await User.findById(decoded.userId);
+      if (!user) {
+        throw new ErrorResponse("User not found", 404);
+      }
+
+      // Generate a new access token
+      const accessToken = generateAccessToken({ userId: user._id });
+
+      return {
+        accessToken,
+      };
+    } catch (err) {
+      throw new ErrorResponse("Invalid refresh token", 400);
+    }
   }
 }
 

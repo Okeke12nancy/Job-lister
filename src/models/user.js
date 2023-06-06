@@ -5,20 +5,17 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const randomize = require("randomatic");
 
-const candidateSchema = new mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
-      required: true,
       trim: true,
-      required: ["please provide your full name"],
+      // required: ["please provide your full name"],
     },
 
     jobTitle: {
       type: String,
-      required: true,
       trim: true,
-      required: ["please provide a job title"],
     },
 
     profileImage: {
@@ -34,41 +31,34 @@ const candidateSchema = new mongoose.Schema(
     phone: {
       type: Number,
       min: 1,
-      required: true,
-      unique: true,
     },
 
     email: {
       type: String,
-      unique: true,
-      required: ["please provide a email"],
-      unique: true,
-      match: [
-        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        "Please add a valid email",
-      ],
+      // unique: true,
+      // required: ["please provide a email"],
+      // match: [
+      //   /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+      //   "Please add a valid email",
+      // ],
     },
 
     password: {
       type: String,
-      required: [true, "Please add a password"],
+      // required: [true, "Please add a password"],
       minlength: 6,
       select: false,
     },
     website: {
       type: String,
-      unique: true,
-      required: true,
     },
 
     currentSalary: {
       type: Number,
-      required: ["please provide your curent Salary"],
     },
 
     expectedSalary: {
       type: Number,
-      required: ["please provide your expected salary"],
     },
 
     experience: {
@@ -76,10 +66,11 @@ const candidateSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["employer"],
-      default: "employer",
+      enum: ["employer", "candidate"],
+      default: "candidate",
+      lowercase: true,
       trim: true,
-      required: true,
+      // required: true,
     },
     educationalLevel: {
       type: String,
@@ -91,7 +82,7 @@ const candidateSchema = new mongoose.Schema(
       type: String,
     },
 
-    AllowInSearch: {
+    allowInSearch: {
       type: String,
       enum: ["yes", "no"],
       default: "yes",
@@ -100,9 +91,14 @@ const candidateSchema = new mongoose.Schema(
     },
 
     description: {
-      type: true,
-      required: ["please provide your description"],
+      type: String,
+      // required: ["please provide your description"],
     },
+
+    aboutCompany: {
+      type: String,
+    },
+
     passwordChangedAt: {
       type: Date,
       select: false,
@@ -134,7 +130,7 @@ const candidateSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-candidateSchema.set("toJSON", {
+userSchema.set("toJSON", {
   versionKey: false,
 
   transform(doc, ret) {
@@ -143,7 +139,7 @@ candidateSchema.set("toJSON", {
 });
 
 // Encrypt password using bcrypt
-candidateSchema.pre("save", async function (next) {
+userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     next();
   }
@@ -153,7 +149,7 @@ candidateSchema.pre("save", async function (next) {
 });
 
 // Encrypt password using bcrypt while updating (admin)
-candidateSchema.pre("findOneAndUpdate", async function (next) {
+userSchema.pre("findOneAndUpdate", async function (next) {
   if (this._update.password) {
     this._update.password = await bcrypt.hash(this._update.password, 10);
   }
@@ -161,19 +157,19 @@ candidateSchema.pre("findOneAndUpdate", async function (next) {
 });
 
 // Sign JWT and return
-candidateSchema.methods.getSignedJwtToken = function () {
+userSchema.methods.getSignedJwtToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE,
   });
 };
 
 // Match user entered password to hashed password in database
-candidateSchema.methods.matchPassword = async function (enteredPassword) {
+userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
 // Generate and hash password token
-candidateSchema.methods.getResetPasswordToken = function () {
+userSchema.methods.getResetPasswordToken = function () {
   // Generate token
   const resetToken = crypto.randomBytes(20).toString("hex");
 
@@ -190,7 +186,7 @@ candidateSchema.methods.getResetPasswordToken = function () {
 };
 
 // Generate email confirm token
-candidateSchema.methods.generateEmailConfirmToken = function (next) {
+userSchema.methods.generateEmailConfirmToken = function (next) {
   // email confirmation token
   const confirmationToken = crypto.randomBytes(20).toString("hex");
 
@@ -204,7 +200,7 @@ candidateSchema.methods.generateEmailConfirmToken = function (next) {
   return confirmTokenCombined;
 };
 
-module.exports = mongoose.model("Candidate", candidateSchema);
+module.exports = mongoose.model("User", userSchema);
 // const User = mongoose.model("User", userSchema);
 
 // exports.User = User;

@@ -1,21 +1,53 @@
-const http = require("http");
+const express = require("express");
+const morgan = require("morgan");
+const passport = require("passport");
+const helmet = require("helmet");
 const dotenv = require("dotenv");
-require("colors");
-const { app } = require("./app");
-const logger = require("./configs/logger.config");
+const cors = require("cors");
+const errorHandler = require("./middlewares/errorMiddlewares");
+const cookieParser = require("cookie-parser");
+const authRoute = require("./routes/authRoute");
 const connectDB = require("./configs/databaseConfig");
 
+// Initialize Passport
+require("./configs/passport");
+
+require("colors");
+const logger = require("./configs/logger.config");
+
 // http server instance
-const server = http.createServer(app);
 
 dotenv.config();
+connectDB();
 
-// // connecting to database
-// connectDB(process.env.MONGODB_URI);
+const app = express();
+// Body parser
+app.use(express.json());
 
+// Cookie parser
+app.use(cookieParser());
+
+// Dev logging middleware
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
+
+// Set security headers
+app.use(helmet());
+
+// Enable CORS
+app.use(cors());
+
+app.use("/api/v1/auth", authRoute);
+
+app.use(passport.initialize());
 const PORT = process.env.PORT || 3001;
 
-server.listen(PORT, () => {
-  logger.info(`Backend is blazing 🔥🔥🔥 @ port ${PORT}`.bold.yellow);
-  //   console.log(`Backend is blazing 🔥🔥🔥 @ port ${PORT}`);
-});
+app.use(errorHandler);
+
+const server = app.listen(
+  PORT,
+  console.log(
+    `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow.bold
+  )
+);

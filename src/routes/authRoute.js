@@ -18,65 +18,71 @@ const {
 router.post("/register", [validate(registerSchema)], authController.register);
 
 // User Login
-router.post("/login", [validate(loginSchema)], authController.login);
+// router.post("/login", [validate(loginSchema)], authController.login);
 
-// User Logout
-router.get("/logout", authController.logout);
+// // User Logout
+// router.get("/logout", authController.logout);
 
-// Get Current User
-router.get("/me", protect, authController.getMe);
+// // Get Current User
+// router.get("/me", protect, authController.getMe);
 
-// Update User Details
-router.put(
-  "/updatedetails",
-  protect,
-  [validate(updateDetailsSchema)],
-  authController.updateDetails
-);
+// // Refresh Access Token route
+// router.post("/refresh-token", authController.refreshAccessToken);
 
-// Update Password
-router.put(
-  "/updatepassword",
-  protect,
-  [validate(updatePasswordSchema)],
-  authController.updatePassword
-);
+// // Refresh Refresh Token route
+// router.post("/refresh-refresh-token", authController.refreshRefreshToken);
 
-// Forgot Password
-router.post(
-  "/forgotpassword",
-  [validate(forgotPasswordSchema)],
-  authController.forgotPassword
-);
+// // Update User Details
+// router.put(
+//   "/updatedetails",
+//   protect,
+//   [validate(updateDetailsSchema)],
+//   authController.updateDetails
+// );
 
-// Reset Password
-router.put(
-  "/resetpassword/:resettoken",
-  [validate(resetPasswordSchema)],
-  authController.resetPassword
-);
+// // Update Password
+// router.put(
+//   "/updatepassword",
+//   protect,
+//   [validate(updatePasswordSchema)],
+//   authController.updatePassword
+// );
 
-// Confirm Email
-router.get(
-  "/confirmemail",
-  [validate(confirmEmailSchema)],
-  authController.confirmEmail
-);
+// // Forgot Password
+// router.post(
+//   "/forgotpassword",
+//   [validate(forgotPasswordSchema)],
+//   authController.forgotPassword
+// );
 
-// Google Login
-router.post("/google-login", authController.googleLogin);
+// // Reset Password
+// router.put(
+//   "/resetpassword/:resettoken",
+//   [validate(resetPasswordSchema)],
+//   authController.resetPassword
+// );
 
-router.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
+// // Confirm Email
+// router.get(
+//   "/confirmemail",
+//   [validate(confirmEmailSchema)],
+//   authController.confirmEmail
+// );
 
-router.get(
-  "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
-  (req, res) => {
-    res.redirect("/"); // Redirect to the desired route after successful authentication
-  }
-);
+// // Google Login
+// router.post("/google-login", authController.googleLogin);
+
+// router.get(
+//   "/google",
+//   passport.authenticate("google", { scope: ["profile", "email"] })
+// );
+
+// router.get(
+//   "/google/callback",
+//   passport.authenticate("google", { failureRedirect: "/login" }),
+//   (req, res) => {
+//     res.redirect("/"); // Redirect to the desired route after successful authentication
+//   }
+// );
 
 module.exports = router;
