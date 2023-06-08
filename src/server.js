@@ -102,10 +102,15 @@ app.get(
   }
 );
 
-// app.use(passport.initialize());
-const PORT = process.env.PORT || 3001;
+app.get("/logout", (req, res) => {
+  req.session = null;
+  req.logout();
+  res.redirect("/");
+});
 
 app.use(errorHandler);
+
+const PORT = process.env.PORT || 3001;
 
 const server = app.listen(
   PORT,
