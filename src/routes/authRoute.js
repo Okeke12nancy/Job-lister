@@ -18,56 +18,50 @@ const {
 router.post("/register", [validate(registerSchema)], authController.register);
 
 // User Login
-// router.post("/login", [validate(loginSchema)], authController.login);
+router.post("/login", [validate(loginSchema)], authController.login);
 
-// // User Logout
-// router.get("/logout", authController.logout);
+// User Logout
+router.get("/logout", authController.logout);
 
-// // Get Current User
-// router.get("/me", protect, authController.getMe);
+// Get Current User
+router.get("/me", protect, authController.getMe);
 
-// // Refresh Access Token route
-// router.post("/refresh-token", authController.refreshAccessToken);
+// Update User Details
+router.put(
+  "/updatedetails",
+  protect,
+  [validate(updateDetailsSchema)],
+  authController.updateDetails
+);
 
-// // Refresh Refresh Token route
-// router.post("/refresh-refresh-token", authController.refreshRefreshToken);
+// Update Password
+router.put(
+  "/updatepassword",
+  protect,
+  [validate(updatePasswordSchema)],
+  authController.updatePassword
+);
 
-// // Update User Details
-// router.put(
-//   "/updatedetails",
-//   protect,
-//   [validate(updateDetailsSchema)],
-//   authController.updateDetails
-// );
+// Forgot Password
+router.post(
+  "/forgotpassword",
+  [validate(forgotPasswordSchema)],
+  authController.forgotPassword
+);
 
-// // Update Password
-// router.put(
-//   "/updatepassword",
-//   protect,
-//   [validate(updatePasswordSchema)],
-//   authController.updatePassword
-// );
+// Reset Password
+router.put(
+  "/resetpassword/:resettoken",
+  [validate(resetPasswordSchema)],
+  authController.resetPassword
+);
 
-// // Forgot Password
-// router.post(
-//   "/forgotpassword",
-//   [validate(forgotPasswordSchema)],
-//   authController.forgotPassword
-// );
-
-// // Reset Password
-// router.put(
-//   "/resetpassword/:resettoken",
-//   [validate(resetPasswordSchema)],
-//   authController.resetPassword
-// );
-
-// // Confirm Email
-// router.get(
-//   "/confirmemail",
-//   [validate(confirmEmailSchema)],
-//   authController.confirmEmail
-// );
+// Confirm Email
+router.get(
+  "/confirmemail",
+  [validate(confirmEmailSchema)],
+  authController.confirmEmail
+);
 
 // // Google Login
 // router.post("/google-login", authController.googleLogin);

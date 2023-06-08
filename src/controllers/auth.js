@@ -4,8 +4,8 @@ const crypto = require("crypto");
 const ErrorResponse = require("../utils/errorResponse");
 const asyncHandler = require("../middlewares/async");
 const sendEmail = require("../utils/sendEmail");
-const sendTokenResponse = require("../utils/errorResponse");
-//const { sendEmail } = require('../services/emailService');
+const User = require("../models/user");
+const sendTokenResponse = require("../utils/sendTokenResponse");
 
 // @desc      Register user
 // @route     POST /api/v1/auth/register
@@ -16,25 +16,22 @@ const AuthService = require("../services/authServices");
 class AuthController {
   register = asyncHandler(async (req, res, next) => {
     const { fullName, email, password, role, description } = req.body;
+    console.log("name");
     const user = await AuthService.registerUser(
+      req, // here
       fullName,
       email,
       password,
       role,
       description
     );
-    this.sendTokenResponse(user, 200, res);
+    sendTokenResponse(user, 200, res);
   });
 
-  // controllers/authController.js
-
-  //   // @desc      Login user
-  //   // @route     POST /api/v1/auth/login
-  //   // @access    Public
   login = asyncHandler(async (req, res, next) => {
     const { email, password } = req.body;
     const user = await AuthService.loginUser(email, password);
-    this.sendTokenResponse(user, 200, res);
+    sendTokenResponse(user, 200, res);
   });
 
   //   // @desc      Log user out / clear cookie
@@ -50,7 +47,7 @@ class AuthController {
   //   // @access    Private
 
   getMe = asyncHandler(async (req, res, next) => {
-    const user = await UserService.getUserById(req.user.id);
+    const user = await AuthService.getUserById(req.user.id);
     res.status(200).json({
       success: true,
       data: user,
@@ -69,7 +66,7 @@ class AuthController {
       email: req.body.email,
     };
 
-    const user = await UserService.updateUserDetails(
+    const user = await AuthService.updateUserDetails(
       req.user.id,
       fieldsToUpdate
     );
@@ -86,7 +83,7 @@ class AuthController {
   //   // @route     PUT /api/v1/auth/updatepassword
   //   // @access    Private
   updatePassword = asyncHandler(async (req, res, next) => {
-    const user = await UserService.getUserById(req.user.id);
+    const user = await AuthService.getUserById(req.user.id);
 
     // Check current password
     if (!(await user.matchPassword(req.body.currentPassword))) {
@@ -94,7 +91,7 @@ class AuthController {
     }
 
     user.password = req.body.newPassword;
-    await UserService.saveUser(user);
+    await AuthService.saveUser(user);
 
     sendTokenResponse(user, 200, res);
   });
@@ -103,7 +100,7 @@ class AuthController {
   //   // @route     POST /api/v1/auth/forgotpassword
   //   // @access    Public
   forgotPassword = asyncHandler(async (req, res, next) => {
-    const user = await UserService.getUserByEmail(req.body.email);
+    const user = await AuthService.getUserByEmail(req.body.email);
 
     if (!user) {
       return next(new ErrorResponse("There is no user with that email", 404));
@@ -112,7 +109,7 @@ class AuthController {
     // Get reset token
     const resetToken = user.getResetPasswordToken();
 
-    await UserService.saveUser(user, { validateBeforeSave: false });
+    await AuthService.saveUser(user, { validateBeforeSave: false });
 
     // Create reset url
     const resetUrl = `${req.protocol}://${req.get(
@@ -152,7 +149,7 @@ class AuthController {
       .update(req.params.resettoken)
       .digest("hex");
 
-    const user = await UserService.getUserByResetToken(resetPasswordToken);
+    const user = await AuthService.getUserByResetToken(resetPasswordToken);
 
     if (!user) {
       return next(new ErrorResponse("Invalid token", 400));
@@ -162,9 +159,9 @@ class AuthController {
     user.password = req.body.password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
-    await UserService.saveUser(user);
+    await AuthService.saveUser(user);
 
-    this.sendTokenResponse(user, 200, res);
+    sendTokenResponse(user, 200, res);
   });
 
   // controllers/authController.js
@@ -188,24 +185,26 @@ class AuthController {
       .update(splitToken)
       .digest("hex");
 
-    // Get user by token
-    const user = await UserService.getUserByConfirmToken(confirmEmailToken);
+    // get user by token
+    const user = await User.findOne({
+      confirmEmailToken,
+      isEmailConfirmed: false,
+    });
 
     if (!user) {
       return next(new ErrorResponse("Invalid Token", 400));
     }
 
-    // Update confirmed to true
+    // update confirmed to true
     user.confirmEmailToken = undefined;
     user.isEmailConfirmed = true;
 
-    // Save
-    await UserService.saveUser(user);
+    // save
+    user.save({ validateBeforeSave: false });
 
-    // Return token
-    this.sendTokenResponse(user, 200, res);
+    // return token
+    sendTokenResponse(user, 200, res);
   });
-
   // controllers/authController.js
 
   //   // @desc      Google login
@@ -235,53 +234,8 @@ class AuthController {
     }
 
     // Generate token and send response
-    this.sendTokenResponse(user, 200, res);
+    sendTokenResponse(user, 200, res);
   });
-
-  refreshAccessToken = async (req, res, next) => {
-    const { refreshToken } = req.body;
-
-    try {
-      const tokens = await AuthService.refreshAccessToken(refreshToken);
-      res.status(200).json(tokens);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  refreshRefreshToken = async (req, res, next) => {
-    const { refreshToken } = req.body;
-
-    try {
-      const tokens = await AuthService.refreshRefreshToken(refreshToken);
-      res.status(200).json(tokens);
-    } catch (error) {
-      next(error);
-    }
-  };
 }
 
 module.exports = new AuthController();
-
-// const sendTokenResponse = (user, statusCode, res) => {
-//   // Create Token
-//   const token = user.getSignerJwtToken();
-
-//   const options = {
-//     expires: new Date(
-//       Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-//     ),
-//     httpOnly: true,
-//   };
-
-//   if (process.env.NODE_ENV === "production") {
-//     options.secure = true;
-//   }
-
-//   res
-//     .status(statusCode)
-//     .cookie("token", token, options)
-//     .json({ success: true, token });
-// };
-
-// module.exports = AuthController;

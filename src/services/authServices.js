@@ -7,7 +7,8 @@ const { generateAccessToken, verifyRefreshToken } = require("../utils/token");
 // services/authService.js
 
 class AuthService {
-  static async registerUser(name, email, password, role) {
+  static async registerUser(req, name, email, password, role) {
+    //
     const user = await User.create({ name, email, password, role });
     const confirmEmailToken = user.generateEmailConfirmToken();
     const confirmEmailURL = `${req.protocol}://${req.get(
@@ -130,28 +131,6 @@ class AuthService {
 
   static async createUser(userData) {
     return await User.create(userData);
-  }
-
-  static async refreshToken(refreshToken) {
-    try {
-      // Verify the refresh token
-      const decoded = verifyRefreshToken(refreshToken);
-
-      // Check if the user exists
-      const user = await User.findById(decoded.userId);
-      if (!user) {
-        throw new ErrorResponse("User not found", 404);
-      }
-
-      // Generate a new access token
-      const accessToken = generateAccessToken({ userId: user._id });
-
-      return {
-        accessToken,
-      };
-    } catch (err) {
-      throw new ErrorResponse("Invalid refresh token", 400);
-    }
   }
 }
 

@@ -19,6 +19,8 @@ exports.loginSchema = Joi.object({
 exports.updateDetailsSchema = Joi.object({
   name: Joi.string(),
   email: Joi.string().email(),
+  password: Joi.string(),
+  description: Joi.string(),
 });
 
 // Validation schema for updating user password
@@ -39,5 +41,5 @@ exports.resetPasswordSchema = Joi.object({
 
 // Validation schema for confirming email
 exports.confirmEmailSchema = Joi.object({
-  token: Joi.string().required(),
+  token: Joi.string(),
 });
